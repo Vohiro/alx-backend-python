@@ -55,4 +55,6 @@ def batch_processing(batch_size):
                 except OSError:
                     # Handle Windows + Git Bash head/pipe errors
                     sys.exit(0)
+                    return
+                
 
