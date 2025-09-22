@@ -112,6 +112,5 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
                          self.apache2_repos)
 
 
-
 if __name__ == "__main__":
     unittest.main()
