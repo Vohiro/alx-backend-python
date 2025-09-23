@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import User, Conversation, Message
+from rest_framework.exceptions import ValidationError
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -18,22 +19,27 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class MessageSerializer(serializers.ModelSerializer):
-    sender = UserSerializer(read_only=True)
+    sender_name = serializers.CharField(source="sender.username", read_only=True)
 
     class Meta:
         model = Message
         fields = [
             "message_id",
-            "sender",
+            "sender_name",
             "conversation",
             "message_body",
             "sent_at",
         ]
 
+    def validate_message_body(self, value):
+        """Ensure message is not empty"""
+        if not value.strip():
+            raise ValidationError("Message body cannot be empty")
+        return value
 
 class ConversationSerializer(serializers.ModelSerializer):
     participants = UserSerializer(many=True, read_only=True)
-    messages = MessageSerializer(many=True, read_only=True)
+    messages = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
@@ -43,3 +49,8 @@ class ConversationSerializer(serializers.ModelSerializer):
             "created_at",
             "messages",
         ]
+
+    def get_messages(self, obj):
+        """Return serialized messages for a conversation"""
+        messages = obj.messages.all().order_by("-sent_at")
+        return MessageSerializer(messages, many=True).data
